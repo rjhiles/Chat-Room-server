@@ -12,7 +12,7 @@ The second argument is the type of socket. SOCK_STREAM means that data or charac
 """
 server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 if len(sys.argv) != 3:
-    print "Correct usage: script, IP address, port number"
+    print("Correct usage: script, IP address, port number")
     exit()
 IP_address = str(sys.argv[1])
 Port = int(sys.argv[2])
@@ -20,15 +20,19 @@ server.bind((IP_address, Port))
 #binds the server to an entered IP address and at the specified port number. The client must be aware of these parameters
 server.listen(100)
 #listens for 100 active connections. This number can be increased as per convenience
-list_of_clients=[]
-
+list_of_clients = []
+chat_history = []
 def clientthread(conn, addr):
     conn.send("Welcome to this chatroom!")
     #sends a message to the client whose user object is conn
+    for line in chat_history:
+        conn.send(line)
+
     while True:
             try:     
                 message = conn.recv(2048)    
                 if message:
+                    manage_chat_history(message)
                     print "<" + addr[0] + "> " + message
                     message_to_send = "<" + addr[0] + "> " + message
                     broadcast(message_to_send,conn)
@@ -50,6 +54,12 @@ def broadcast(message,connection):
 def remove(connection):
     if connection in list_of_clients:
         list_of_clients.remove(connection)
+
+def manage_chat_history(message):
+    while len(chat_history) >= 22:
+        chat_history.pop(0)
+    chat_history.append(message)
+     
 
 while True:
     conn, addr = server.accept()
